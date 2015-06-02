@@ -12,6 +12,9 @@ gets the hell out of your way.
   * Can make use of table summary row - you can put several different Excel functions into the summary, like Sum(), Average(), etc.
 * Queries execute asyncronously, although they can't currently be canceled... YET.
 
+## What does it look like?
+![Main Interface](/WikiAssets/sample.png)
+
 ## I wish I could use this awesome library programmatically
 You can.
 
