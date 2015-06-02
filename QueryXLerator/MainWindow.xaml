@@ -1,0 +1,138 @@
+﻿<Window x:Class="QueryXLerator.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ae="http://icsharpcode.net/sharpdevelop/avalonedit" Title="Query XLerator"
+        Width="1000" Height="800" Icon="dbquery-icon.jpg"
+        Loaded="MainWindow_Loaded">
+    <Window.Resources>
+        <DataTemplate x:Key="TaskListItemTemplate">
+            <Border BorderBrush="Gainsboro" BorderThickness="2">
+                <Grid Margin="3">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="1" MaxHeight="400"
+                               Text="{Binding Description}"
+                               TextWrapping="Wrap" />
+                    <TextBlock Grid.Row="2" MaxHeight="400"
+                               Text="{Binding Status}"
+                               TextWrapping="Wrap" />
+                    <CheckBox Grid.Row="3" Content="Error?"
+                              IsChecked="{Binding IsInErrorState}"
+                              IsEnabled="False" />
+                    <StackPanel Grid.Row="4" Orientation="Horizontal">
+                        <TextBlock>
+                            <Run Text="Started: " />
+                            <Run Text="{Binding Started, StringFormat=HH:mm:ss}" />
+                            <Run Text="    Elapsed: " />
+                            <Run Text="{Binding DurationString, Mode=OneWay}" />
+                        </TextBlock>
+
+                    </StackPanel>
+                    <StackPanel Grid.Row="5" Orientation="Horizontal">
+                        <Button Margin="3" Click="LoadQueryText" Content="Load Query"
+                                DataContext="{Binding}" />
+                        <Button Margin="3" Click="RemoveCompletedTask" Content="Remove"
+                                DataContext="{Binding}"
+                                IsEnabled="{Binding IsTaskComplete}" />
+
+                    </StackPanel>
+                </Grid>
+            </Border>
+        </DataTemplate>
+    </Window.Resources>
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="11*" />
+            <ColumnDefinition Width="8" />
+            <ColumnDefinition Width="5*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+        <Grid Grid.Row="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition />
+            </Grid.ColumnDefinitions>
+            <Grid.RowDefinitions>
+                <RowDefinition />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <Label Grid.Column="0">Connection String:</Label>
+            <TextBox Name="connectionStringTextBox" Grid.Column="1"
+                     Text="server=(localdb)\v11.0; integrated security=sspi;" />
+            <Label Grid.Row="1" Grid.Column="0">Output File Name:</Label>
+            <TextBox Name="outputFileNameTextBox" Grid.Row="1" Grid.Column="1"
+                     Text="QueryOutput.xlsx" ToolTip="Will be placed in your 'My Documents' folder" />
+        </Grid>
+        <Border Grid.Row="1" Grid.Column="0" BorderBrush="Gray"
+                BorderThickness="2">
+            <ae:TextEditor Name="queryText" Margin="5" FontFamily="Source Code Pro"
+                           HorizontalScrollBarVisibility="Auto" KeyboardNavigation.AcceptsReturn="True"
+                           SyntaxHighlighting="C#" VerticalScrollBarVisibility="Auto" />
+        </Border>
+
+        <GridSplitter Grid.RowSpan="1000" Grid.Column="1" HorizontalAlignment="Stretch"
+                      VerticalAlignment="Stretch" />
+
+        <Grid Grid.RowSpan="1000" Grid.Column="2">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="8" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+            <ListBox x:Name="RunningTasks" ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
+            <GridSplitter Grid.Row="1" Height="8" HorizontalAlignment="Stretch" />
+            <ListBox x:Name="CompletedTasks" Grid.Row="2"
+                     ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
+        </Grid>
+
+        <Grid Grid.Row="3" Grid.Column="0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Grid.Row="2" Grid.Column="0">
+                <Button Name="FormatQueryButton" Margin="5" Click="FormatQueryButton_Click"
+                        Content="Format Query" />
+            </StackPanel>
+            <GroupBox Grid.Column="1" Header="Empty resultsets in Excel output">
+                <StackPanel>
+                    <RadioButton x:Name="NoExcludeEmptyResultsFromExcelFile" Margin="5" Content="Ignore - do not include"
+                                 GroupName="IBS" IsChecked="True" />
+                    <RadioButton x:Name="YesIncludeEmptyResultsInExcelFile" Margin="5"
+                                 Content="Include blank tab in Excel file" GroupName="IBS" />
+                </StackPanel>
+            </GroupBox>
+            <GroupBox Grid.Column="2" Header="Table Style">
+                <ComboBox Name="SelectedTableStyle" ItemsSource="{Binding TableStyleNames}">
+                    <ComboBox.ItemTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Image Width="61" Height="46" Margin="3"
+                                       Source="{Binding ImageSource}" />
+                                <TextBlock Margin="3" Text="{Binding Name}" />
+                            </StackPanel>
+                        </DataTemplate>
+                    </ComboBox.ItemTemplate>
+                </ComboBox>
+            </GroupBox>
+            <StackPanel Grid.Column="3">
+                <Button Name="RunQueryButton" Margin="5" Click="RunQueryButton_Click"
+                        Content="Run Query" />
+            </StackPanel>
+        </Grid>
+    </Grid>
+</Window>
