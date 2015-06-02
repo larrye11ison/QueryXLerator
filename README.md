@@ -1,5 +1,5 @@
 # QueryXLerator
-Utility for creating Excel (xlsx) files from SQL Queries
+Utility for creating Excel (xlsx) files from SQL Server Queries
 
 ## What is this thing?
 Have you ever needed to just create a damn Excel file directly from a SQL query batch? This tool does that and then 
