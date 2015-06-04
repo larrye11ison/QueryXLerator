@@ -21,9 +21,12 @@ namespace QueryXLerator
             InitializeComponent();
             RunningTasksX = new ObservableCollection<FileGenerationTaskViewModel>();
             CompletedTasksX = new ObservableCollection<FileGenerationTaskViewModel>();
+            OutputPath = Environment.GetFolderPath(Environment.SpecialFolder.MyDocuments);
         }
 
         public ObservableCollection<FileGenerationTaskViewModel> CompletedTasksX { get; set; }
+
+        public string OutputPath { get; set; }
 
         public ObservableCollection<FileGenerationTaskViewModel> RunningTasksX { get; set; }
 
@@ -41,7 +44,7 @@ namespace QueryXLerator
                         {
                             if (ts.Name == "None")
                             {
-                            	return "00000000000";
+                                return "00000000000";
                             }
                             else
                             {
@@ -102,10 +105,10 @@ namespace QueryXLerator
 WAITFOR DELAY '00:00:03';
 
 SELECT 'WorksheetTabName' AS __tabname__ -- sets the tab name in Excel
-	,database_id AS [/sumTotal of database id] -- will insert ""sum()"" function in summary row
-	-- Any excel function can be used here, just preface with a fwd slash
-	-- The rest of the content will be the column header
-	,NAME -- just a regular column
+	,database_id AS [Total of database id/sum] -- will insert “sum” function in summary row
+    -- Any excel function can be used here, just use a fwd slash followed by the function
+	-- name. The rest of the content will be the column header.
+    ,NAME -- just a regular column
 FROM master.sys.databases;
 ";
         }
@@ -162,6 +165,12 @@ FROM master.sys.databases;
             public ImageSource ImageSource { get; set; }
 
             public string Name { get; set; }
+        }
+
+        private void OpenDocumentsFolder(object sender, RoutedEventArgs e)
+        {
+            var butt = sender as Button;
+            System.Diagnostics.Process.Start(butt.Content.ToString());
         }
     }
 }
