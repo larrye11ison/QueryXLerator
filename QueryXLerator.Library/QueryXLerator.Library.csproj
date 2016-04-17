@@ -7,9 +7,9 @@
     <ProjectGuid>{8A942CC9-D073-442A-9BFF-9DF3E4CA7E1C}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>QueryXLerator.Library</RootNamespace>
+    <RootNamespace>QueryXLerator</RootNamespace>
     <AssemblyName>QueryXLerator.Library</AssemblyName>
-    <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
     <SolutionDir Condition="$(SolutionDir) == '' Or $(SolutionDir) == '*Undefined*'">..\</SolutionDir>

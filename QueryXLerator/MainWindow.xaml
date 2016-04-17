@@ -1,12 +1,13 @@
-﻿<Window x:Class="QueryXLerator.MainWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:ae="http://icsharpcode.net/sharpdevelop/avalonedit"
-        Title="Query XLerator"
-        Width="1000"
-        Height="800"
-        Icon="dbquery-icon.jpg"
-        Loaded="MainWindow_Loaded">
+﻿<Window
+    x:Class="QueryXLerator.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:ae="http://icsharpcode.net/sharpdevelop/avalonedit"
+    Title="Query XLerator"
+    Width="1000"
+    Height="800"
+    Icon="dbquery-icon.jpg"
+    Loaded="MainWindow_Loaded">
     <Window.Resources>
         <Style TargetType="TextBlock">
             <Setter Property="Margin" Value="5" />
@@ -33,7 +34,7 @@
             <Setter Property="Margin" Value="5" />
         </Style>
         <DataTemplate x:Key="TaskListItemTemplate">
-            <Border BorderBrush="Gainsboro" BorderThickness="2">
+            <Border BorderBrush="{StaticResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="2">
                 <Grid Margin="3">
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
@@ -44,18 +45,21 @@
                         <RowDefinition />
                     </Grid.RowDefinitions>
 
-                    <TextBlock Grid.Row="1"
-                               MaxHeight="400"
-                               Text="{Binding Description}"
-                               TextWrapping="Wrap" />
-                    <TextBlock Grid.Row="2"
-                               MaxHeight="400"
-                               Text="{Binding Status}"
-                               TextWrapping="Wrap" />
-                    <CheckBox Grid.Row="3"
-                              Content="Error?"
-                              IsChecked="{Binding IsInErrorState}"
-                              IsEnabled="False" />
+                    <TextBlock
+                        Grid.Row="1"
+                        MaxHeight="400"
+                        Text="{Binding Description}"
+                        TextWrapping="Wrap" />
+                    <TextBlock
+                        Grid.Row="2"
+                        MaxHeight="200"
+                        Text="{Binding Status}"
+                        TextWrapping="Wrap" />
+                    <CheckBox
+                        Grid.Row="3"
+                        Content="Error?"
+                        IsChecked="{Binding IsInErrorState}"
+                        IsEnabled="False" />
                     <StackPanel Grid.Row="4" Orientation="Horizontal">
                         <TextBlock>
                             <Run Text="Started: " />
@@ -65,15 +69,23 @@
                         </TextBlock>
                     </StackPanel>
                     <StackPanel Grid.Row="5" Orientation="Horizontal">
-                        <Button Margin="3"
-                                Click="LoadQueryText"
-                                Content="Load Query"
-                                DataContext="{Binding}" />
-                        <Button Margin="3"
-                                Click="RemoveCompletedTask"
-                                Content="Remove"
-                                DataContext="{Binding}"
-                                IsEnabled="{Binding IsTaskComplete}" />
+                        <Button
+                            Margin="3"
+                            Click="LoadQueryText"
+                            Content="Load Query"
+                            DataContext="{Binding}" />
+                        <Button
+                            Margin="3"
+                            Click="RemoveCompletedTask"
+                            Content="Remove"
+                            DataContext="{Binding}"
+                            IsEnabled="{Binding IsTaskComplete}" />
+                        <Button
+                            Margin="3"
+                            Click="CancelRunningTask"
+                            Content="Cancel"
+                            DataContext="{Binding}"
+                            IsEnabled="{Binding CanCancel}" />
                     </StackPanel>
                 </Grid>
             </Border>
@@ -87,30 +99,60 @@
         </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
-            <RowDefinition Height="*" />
+            <RowDefinition />
             <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <GridSplitter Grid.RowSpan="1000"
-                      Grid.Column="1"
-                      HorizontalAlignment="Stretch"
-                      VerticalAlignment="Stretch" />
+        <GridSplitter
+            Grid.RowSpan="1000"
+            Grid.Column="1" />
 
         <Grid Grid.RowSpan="1000" Grid.Column="2">
             <Grid.RowDefinitions>
-                <RowDefinition Height="*" />
+                <RowDefinition />
                 <RowDefinition Height="8" />
-                <RowDefinition Height="*" />
+                <RowDefinition />
             </Grid.RowDefinitions>
-            <ListBox x:Name="RunningTasks" ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
-            <GridSplitter Grid.Row="1"
-                          Height="8"
-                          HorizontalAlignment="Stretch" />
-            <ListBox x:Name="CompletedTasks"
-                     Grid.Row="2"
-                     ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Margin="0"
+                    Padding="5"
+                    Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                    Foreground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}">
+                    Running Tasks
+                </TextBlock>
+                <ListBox
+                    x:Name="RunningTasks"
+                    Grid.Row="1"
+                    ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
+            </Grid>
+            <GridSplitter
+                Grid.Row="1"
+                Height="8" />
+            <Grid Grid.Row="2">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
+                </Grid.RowDefinitions>
+                <TextBlock
+                    Margin="0"
+                    Padding="5"
+                    Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                    Foreground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}">
+                    Completed Tasks
+                </TextBlock>
+                <ListBox
+                    x:Name="CompletedTasks"
+                    Grid.Row="1"
+                    ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
+            </Grid>
+
         </Grid>
 
-        <Grid Grid.Row="0">
+        <Grid>
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition />
@@ -121,57 +163,65 @@
                 <RowDefinition />
             </Grid.RowDefinitions>
 
-            <Label Grid.Column="0">Connection String:</Label>
-            <TextBox Name="connectionStringTextBox"
-                     Grid.Column="1"
-                     Text="server=(localdb)\v11.0; integrated security=sspi;" />
-            <Label Grid.Row="1" Grid.Column="0">Output File Name:</Label>
-            <TextBox Name="outputFileNameTextBox"
-                     Grid.Row="1"
-                     Grid.Column="1"
-                     Text="QueryOutput.xlsx"
-                     ToolTip="Will be placed in your 'My Documents' folder" />
-            <TextBlock Grid.Row="2" Grid.Column="0">Files will be saved to:</TextBlock>
-            <Button Grid.Row="2"
-                    Grid.Column="1"
-                    Click="OpenDocumentsFolder"
-                    Content="{Binding OutputPath}"
-                    Style="{StaticResource LinkButton}" />
+            <Label>Connection String:</Label>
+            <TextBox
+                Name="connectionStringTextBox"
+                Grid.Column="1"
+                Text="server=(localdb)\MSSqlLocalDB; integrated security=sspi;" />
+            <Label Grid.Row="1">Output File Name:</Label>
+            <TextBox
+                Name="outputFileNameTextBox"
+                Grid.Row="1"
+                Grid.Column="1"
+                Text="QueryOutput.xlsx"
+                ToolTip="Will be placed in your 'My Documents' folder" />
+            <TextBlock Grid.Row="2">Files will be saved to:</TextBlock>
+            <Button
+                Grid.Row="2"
+                Grid.Column="1"
+                Padding="3"
+                Style="{StaticResource LinkButton}"
+                VerticalContentAlignment="Center"
+                Click="OpenDocumentsFolder"
+                Content="{Binding OutputPath}" />
 
         </Grid>
-        <Border Grid.Row="1"
-                Grid.Column="0"
-                BorderBrush="Gray"
-                BorderThickness="2">
-            <ae:TextEditor Name="queryText"
-                           Margin="5"
-                           FontFamily="PragmataPro"
-                           FontSize="14"
-                           HorizontalScrollBarVisibility="Auto"
-                           KeyboardNavigation.AcceptsReturn="True"
-                           VerticalScrollBarVisibility="Auto" />
+        <Border
+            Grid.Row="1"
+            BorderBrush="Gray"
+            BorderThickness="2">
+            <ae:TextEditor
+                Name="queryText"
+                Margin="5"
+                FontFamily="PragmataPro"
+                FontSize="14"
+                HorizontalScrollBarVisibility="Auto"
+                KeyboardNavigation.AcceptsReturn="True"
+                VerticalScrollBarVisibility="Auto" />
         </Border>
 
-        <Grid Grid.Row="3" Grid.Column="0">
+        <Grid Grid.Row="3">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="Auto" />
 
-                <ColumnDefinition Width="*" />
+                <ColumnDefinition />
                 <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
             <GroupBox Grid.Column="1" Header="Empty resultsets in Excel output">
                 <StackPanel>
-                    <RadioButton x:Name="NoExcludeEmptyResultsFromExcelFile"
-                                 Margin="5"
-                                 Content="Ignore - do not include"
-                                 GroupName="IBS"
-                                 IsChecked="True" />
-                    <RadioButton x:Name="YesIncludeEmptyResultsInExcelFile"
-                                 Margin="5"
-                                 Content="Include blank tab in Excel file"
-                                 GroupName="IBS" />
+                    <RadioButton
+                        x:Name="NoExcludeEmptyResultsFromExcelFile"
+                        Margin="5"
+                        Content="Ignore - do not include"
+                        GroupName="IBS"
+                        IsChecked="True" />
+                    <RadioButton
+                        x:Name="YesIncludeEmptyResultsInExcelFile"
+                        Margin="5"
+                        Content="Include blank tab in Excel file"
+                        GroupName="IBS" />
                 </StackPanel>
             </GroupBox>
             <GroupBox Grid.Column="2" Header="Table Style">
@@ -179,11 +229,12 @@
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
-                    <ComboBox Name="SelectedTableStyle"
-                              Width="200"
-                              HorizontalAlignment="Left"
-                              ItemsSource="{Binding TableStyleNames}"
-                              SelectedIndex="0">
+                    <ComboBox
+                        Name="SelectedTableStyle"
+                        Width="200"
+                        HorizontalAlignment="Left"
+                        ItemsSource="{Binding TableStyleNames}"
+                        SelectedIndex="0">
                         <ComboBox.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
@@ -191,10 +242,11 @@
                                         Original size was 61 x 46, but by squeezing it down
                                         a bit you can see many more at one time.
                                     -->
-                                    <Image Width="37"
-                                           Height="28"
-                                           Margin="3"
-                                           Source="{Binding ImageSource}" />
+                                    <Image
+                                        Width="37"
+                                        Height="28"
+                                        Margin="3"
+                                        Source="{Binding ImageSource}" />
                                     <TextBlock Margin="3" Text="{Binding Name}" />
                                 </StackPanel>
                             </DataTemplate>
@@ -204,28 +256,30 @@
             </GroupBox>
             <Grid Grid.Column="4">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
+                    <RowDefinition />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
-                <Button Name="RunQueryButton"
-                        Grid.Row="1"
-                        Margin="5" 
-                        Click="RunQueryButton_Click"
-                        Content="Run Query" />
+                <Button
+                    Name="RunQueryButton"
+                    Grid.Row="1"
+                    Margin="5"
+                    Click="RunQueryButton_Click"
+                    Content="Run Query" />
             </Grid>
-            <Grid Grid.Row="2" Grid.Column="0">
+            <Grid Grid.Row="2">
                 <Grid.RowDefinitions>
-                    <RowDefinition Height="*" />
+                    <RowDefinition />
                     <RowDefinition Height="Auto" />
-                    <RowDefinition Height="*" />
+                    <RowDefinition />
                 </Grid.RowDefinitions>
 
-                <Button Name="FormatQueryButton"
-                        Grid.Row="1"
-                        Margin="5"
-                        Click="FormatQueryButton_Click"
-                        Content="Format Query" />
+                <Button
+                    Name="FormatQueryButton"
+                    Grid.Row="1"
+                    Margin="5"
+                    Click="FormatQueryButton_Click"
+                    Content="Format Query" />
             </Grid>
         </Grid>
     </Grid>

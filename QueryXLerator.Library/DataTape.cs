@@ -3,8 +3,10 @@ using OfficeOpenXml.Table;
 using System;
 using System.Collections.Generic;
 using System.Data.SqlClient;
+using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 
 namespace QueryXLerator
 {
@@ -14,25 +16,28 @@ namespace QueryXLerator
 
         private static readonly Func<string, bool> _IsColumnNameSpecialAndToBeIgnored = columnName =>
         {
-            return columnName.ToLower().Contains(magicTabNameFieldHeaderColumnNameString.ToLower());
+            return columnName?.IndexOf(magicTabNameFieldHeaderColumnNameString, StringComparison.InvariantCultureIgnoreCase) >= 0;
         };
 
         private static readonly Regex columnFormatRegex = new Regex(@"\/(?<p>[%\$a-z]+)");
+
+        private static readonly Dictionary<string, RowFunctions> ExcelFuncNames = Enum.GetValues(typeof(RowFunctions))
+                        .Cast<RowFunctions>()
+                        .ToDictionary(x => Enum.GetName(typeof(RowFunctions), x), x => x);
+
         private static readonly Regex invalidTabNameRegex = new Regex(@"[\[\]\*\/\\\?\:]");
 
-        private static Dictionary<string, RowFunctions> ExcelFuncNames = new Dictionary<string, RowFunctions>();
-
-        public static void AddDataToWorksheet(string xlFilePath, SqlCommand cmd, string worksheetName, string tableName, bool skipEmptyResults = false)
+        public static void AddDataToWorksheet(string xlFilePath, SqlCommand cmd, string worksheetName, string tableName, bool skipEmptyResults = false, CancellationToken? token = null)
         {
             if (cmd == null)
             {
                 throw new ArgumentNullException("cmd");
             }
             ValidateAddDataParameters(xlFilePath, worksheetName, tableName);
-            InjectSqlCommandIntoExcelPackage(xlFilePath, cmd, worksheetName, tableName, skipEmptyResults);
+            InjectSqlCommandIntoExcelPackage(xlFilePath, cmd, worksheetName, tableName, skipEmptyResults, token ?? CancellationToken.None);
         }
 
-        public static void AddDataToWorksheet(string xlFilePath, string commandText, string connectionString, string worksheetName, string tableName, bool skipEmptyResults = false)
+        public static void AddDataToWorksheet(string xlFilePath, string commandText, string connectionString, string worksheetName, string tableName, bool skipEmptyResults = false, CancellationToken? token = null)
         {
             if (string.IsNullOrEmpty(commandText) || commandText.Trim().Length == 0)
             {
@@ -52,7 +57,7 @@ namespace QueryXLerator
                     cmd.CommandTimeout = 0;
                     cmd.CommandText = commandText;
                     cmd.CommandType = System.Data.CommandType.Text;
-                    InjectSqlCommandIntoExcelPackage(xlFilePath, cmd, worksheetName, tableName, skipEmptyResults);
+                    InjectSqlCommandIntoExcelPackage(xlFilePath, cmd, worksheetName, tableName, skipEmptyResults, token ?? CancellationToken.None);
                 }
             }
 
@@ -90,7 +95,7 @@ namespace QueryXLerator
                 .OrderBy(t => t);
         }
 
-        public static void WriteOutputFile(string outputPath, string commandText, string connectionString, bool skipEmptyResults = false, string tableStyleName = "")
+        public static void WriteOutputFile(string outputPath, string commandText, string connectionString, bool skipEmptyResults = false, string tableStyleName = "", CancellationToken? token = null)
         {
             using (var cn = new SqlConnection())
             {
@@ -101,34 +106,41 @@ namespace QueryXLerator
                     cmd.CommandType = System.Data.CommandType.Text;
                     cmd.CommandText = commandText;
                     cmd.CommandTimeout = 16000;
-                    WriteOutputFile(outputPath, cmd, cn, skipEmptyResults, tableStyleName);
+                    WriteOutputFile(outputPath, cmd, cn, skipEmptyResults, tableStyleName, token);
                 }
             }
         }
 
-        public static void WriteOutputFile(string outputPath, SqlCommand cmd, SqlConnection cn, bool skipEmptyResults = false, string tableStyleName = "")
+        public static void WriteOutputFile(string outputPath, SqlCommand cmd, SqlConnection cn, bool skipEmptyResults = false, string tableStyleName = "", CancellationToken? token = null)
         {
-            if (System.IO.File.Exists(outputPath))
+            var cancelToken = token ?? CancellationToken.None;
+
+            cancelToken.Register(() => cmd.Cancel());
+
+            if (File.Exists(outputPath))
             {
-                System.IO.File.Delete(outputPath);
+                File.Delete(outputPath);
             }
 
             //_IsColumnNameSpecialAndToBeIgnored =
 
-            using (var pkg = new ExcelPackage(new System.IO.FileInfo(outputPath)))
+            using (var pkg = new ExcelPackage(new FileInfo(outputPath)))
             {
                 var tabNumber = 0;
                 {
-                    ExcelFuncNames = Enum.GetValues(typeof(RowFunctions))
-                        .Cast<RowFunctions>()
-                        .ToDictionary(x => Enum.GetName(typeof(RowFunctions), x), x => (RowFunctions)x);
-
                     using (var rdr = cmd.ExecuteReader())
                     {
                         do
                         {
                             var proposedWorksheetName = String.Format("Result_{0}", tabNumber++);
-                            WriteWorksheet(pkg.Workbook.Worksheets, proposedWorksheetName, _IsColumnNameSpecialAndToBeIgnored, rdr, skipEmptyResults, null, tableStyleName);
+                            WriteWorksheet(pkg.Workbook.Worksheets,
+                                proposedWorksheetName,
+                                _IsColumnNameSpecialAndToBeIgnored,
+                                rdr,
+                                skipEmptyResults,
+                                //token ?? CancellationToken.None,
+                                tableName: null,
+                                tableStyleName: tableStyleName);
                         } while (rdr.NextResult());
 
                         pkg.Save();
@@ -190,9 +202,9 @@ namespace QueryXLerator
             };
         }
 
-        private static void InjectSqlCommandIntoExcelPackage(string xlFilePath, SqlCommand cmd, string worksheetName, string tableName, bool skipEmptyResults)
+        private static void InjectSqlCommandIntoExcelPackage(string xlFilePath, SqlCommand cmd, string worksheetName, string tableName, bool skipEmptyResults, CancellationToken token)
         {
-            using (var pkg = new ExcelPackage(new System.IO.FileInfo(xlFilePath)))
+            using (var pkg = new ExcelPackage(new FileInfo(xlFilePath)))
             {
                 var nmdRange = pkg.Workbook.Names.Where(n => string.Compare(n.Name, tableName, true) == 0).FirstOrDefault();
                 if (nmdRange != null)
@@ -207,7 +219,8 @@ namespace QueryXLerator
                 }
                 using (var rdr = cmd.ExecuteReader())
                 {
-                    WriteWorksheet(pkg.Workbook.Worksheets, worksheetName, _IsColumnNameSpecialAndToBeIgnored, rdr, skipEmptyResults, tableName);
+                    WriteWorksheet(pkg.Workbook.Worksheets, worksheetName, _IsColumnNameSpecialAndToBeIgnored, rdr, skipEmptyResults, //token, 
+                        tableName);
                 }
                 pkg.Save();
             }
@@ -235,16 +248,18 @@ namespace QueryXLerator
             {
                 throw new Exception("No tableName was specified.");
             }
-            if (System.IO.File.Exists(xlFilePath) == false)
+            if (File.Exists(xlFilePath) == false)
             {
-                throw new System.IO.FileNotFoundException(String.Format("No Excel file found at '{0}'.", xlFilePath));
+                throw new FileNotFoundException(String.Format("No Excel file found at '{0}'.", xlFilePath));
             }
         }
 
         private static void WriteWorksheet(ExcelWorksheets worksheets,
             string proposedWorksheetName,
             Func<string, bool> IsColumnNameSpecialAndToBeIgnored,
-            SqlDataReader rdr, bool skipEmptyResults, string tableName = null, string tableStyleName = null)
+            SqlDataReader rdr, bool skipEmptyResults,
+            //CancellationToken token,
+            string tableName = null, string tableStyleName = null)
         {
             if (skipEmptyResults)
             {
@@ -261,7 +276,7 @@ namespace QueryXLerator
             {
                 matchingTableStyleName = "None";
             }
-            TableStyles theTableStyle = (TableStyles)System.Enum.Parse(typeof(TableStyles), matchingTableStyleName);
+            TableStyles theTableStyle = (TableStyles)Enum.Parse(typeof(TableStyles), matchingTableStyleName);
 
             IEnumerable<string> previousWorksheetNames = worksheets.Select(ws => ws.Name).ToArray();
 
@@ -270,7 +285,7 @@ namespace QueryXLerator
 
             var sheet = worksheets.Add(String.Format("_{0:N}", Guid.NewGuid()));
 
-            var columnMetadata = Enumerable.Range(0, rdr.FieldCount)
+            var rawColumnMetadataFromDataReader = Enumerable.Range(0, rdr.FieldCount)
                 .Select(cc => new
                 {
                     ReaderIndex = cc,
@@ -280,21 +295,22 @@ namespace QueryXLerator
                 }).ToArray();
 
             var excelColumnIndex = 1;
-            var realColumns = columnMetadata
+            var realColumnsToWriteToExcel = rawColumnMetadataFromDataReader
                 .Where(c => IsColumnNameSpecialAndToBeIgnored(c.ColumnMetaData.Name) == false)
                 .Select(c => new { Column = c, ExcelIndex = excelColumnIndex++ }) // everyone loves having side-effects in a Linq query!!
                 .ToArray();
 
-            var specialColumnForTabName = columnMetadata
+            var specialColumnForTabName = rawColumnMetadataFromDataReader
                 .Where(c => IsColumnNameSpecialAndToBeIgnored(c.ColumnMetaData.Name))
                 .FirstOrDefault();
 
             // keep track of the actual header we used so we don't use it again going forward...
             var columnHeaders = new List<string>();
 
-            ////////////////////////////////////////////////
+            //
             // Write column headers
-            foreach (var c in realColumns)
+            //
+            foreach (var c in realColumnsToWriteToExcel)
             {
                 var excelIndex = c.ExcelIndex;
 
@@ -308,9 +324,9 @@ namespace QueryXLerator
                 var columnFormat = ColumnFormats.MapTypeToColumnHandler(c.Column.Type, c.Column.ProviderType);
                 columnHandlers[excelIndex] = columnFormat;
                 ExcelColumn column = sheet.Column(excelIndex);
-                column.Style.Numberformat.Format = columnMetadata[c.Column.ReaderIndex].ColumnMetaData.ExcelFormatString == ""
+                column.Style.Numberformat.Format = rawColumnMetadataFromDataReader[c.Column.ReaderIndex].ColumnMetaData.ExcelFormatString == ""
                     ? columnFormat.ExcelFormatName()
-                    : columnMetadata[c.Column.ReaderIndex].ColumnMetaData.ExcelFormatString;
+                    : rawColumnMetadataFromDataReader[c.Column.ReaderIndex].ColumnMetaData.ExcelFormatString;
                 column.Width = 20;
             }
 
@@ -323,7 +339,9 @@ namespace QueryXLerator
                 tabNameSet = true;
             }
 
-            // write out the actual rows of data
+            //
+            // Write out the actual rows of data
+            //
             while (rdr.Read())
             {
                 // if the query specified the magic column name, use it as the TAB name.
@@ -333,7 +351,7 @@ namespace QueryXLerator
                     tabNameSet = true;
                 }
 
-                foreach (var c in realColumns)
+                foreach (var c in realColumnsToWriteToExcel)
                 {
                     var columnIndex = c.Column.ReaderIndex;
                     if ((rdr.IsDBNull(columnIndex) == false)
@@ -346,36 +364,47 @@ namespace QueryXLerator
                 excelRowNumber++;
             }
 
-            // make sure the tab name is unique and does not contain any of:
-            //          [ ] * / \ ? :
+            //
+            // Make sure the tab name is unique and does not contain any of: [ ] * / \ ? :
+            //
             var tempTabName = invalidTabNameRegex.Replace(proposedWorksheetName, "");
             tempTabName = Uniqueify(previousWorksheetNames, tempTabName);
             sheet.Name = tempTabName;
 
-            // set up the "table" in excel - this gives our data some formatting, automatically enables
-            // sorting and filtering, plus allows us to easily put summary/totals row at the bottom.
-            var tableAddress = new ExcelAddressBase(1, 1, excelRowNumber - 1, realColumns.Count());
+            //
+            // Set up the new table in our workbook.
+            //
+            var tableAddress = new ExcelAddressBase(1, 1, excelRowNumber - 1, realColumnsToWriteToExcel.Count());
 
-            // set up a default tablename
-            string newTableName = String.Format("Table_{0}", tempTabName);
-            if (string.IsNullOrEmpty(tableName) == false && tableName.Length > 0)
+            string newTableName = null;
+            // If a name was passed in, use that...
+            if (!string.IsNullOrEmpty(tableName) && tableName.Length > 0)
             {
-                // but if one was passed in, use that instead.
                 newTableName = tableName;
             }
-            var tbl = sheet.Tables.Add(tableAddress, newTableName);
-
-            tbl.TableStyle = theTableStyle;
-
-            tbl.ShowTotal = false;
-
-            foreach (var c in tbl.Columns)
+            else
             {
-                var colMeta = columnMetadata.Where(f => f.ColumnMetaData.Name == c.Name);
+                // ...but if not, use a default name.
+                newTableName = String.Format("Table_{0}", tempTabName);
+            }
+
+            var newExcelTable = sheet.Tables.Add(tableAddress, newTableName);
+
+            newExcelTable.TableStyle = theTableStyle;
+
+            newExcelTable.ShowTotal = false;
+
+            //
+            // Set up the functions in the Totals Row (if any were specified - if not, the totals row is not shown)
+            // Iterates through the columns in the 
+            //
+            foreach (var c in newExcelTable.Columns)
+            {
+                var colMeta = rawColumnMetadataFromDataReader.Where(f => f.ColumnMetaData.Name == c.Name);
                 if (colMeta.Count() > 0 && colMeta.FirstOrDefault().ColumnMetaData.RowFunction != RowFunctions.None)
                 {
                     c.TotalsRowFunction = colMeta.FirstOrDefault().ColumnMetaData.RowFunction;
-                    tbl.ShowTotal = true;
+                    newExcelTable.ShowTotal = true;
                 }
 
                 // TODO: grouping is untested, possibly broken, unsure if it even works. Need to finish impl and test.

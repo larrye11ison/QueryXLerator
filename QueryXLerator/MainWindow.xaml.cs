@@ -119,6 +119,12 @@ FROM master.sys.databases;
             var fgt = tb.DataContext as FileGenerationTaskViewModel;
             CompletedTasksX.Remove(fgt);
         }
+        private void CancelRunningTask(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as Button;
+            var fgt = tb.DataContext as FileGenerationTaskViewModel;
+            fgt.Cancel();
+        }
 
         private async void RunQueryButton_Click(object sender, RoutedEventArgs e)
         {
