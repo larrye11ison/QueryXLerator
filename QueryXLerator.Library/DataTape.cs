@@ -2,6 +2,7 @@
 using OfficeOpenXml.Table;
 using System;
 using System.Collections.Generic;
+using System.Data;
 using System.Data.SqlClient;
 using System.IO;
 using System.Linq;
@@ -86,6 +87,26 @@ namespace QueryXLerator
             //    }
             //    pkg.Save();
             //}
+        }
+
+        public static void AddDataToWorksheet(string xlFilePath, IDataReader dataReader, string worksheetName, string tableName)
+        {
+            using (var pkg = new ExcelPackage(new FileInfo(xlFilePath)))
+            {
+                var nmdRange = pkg.Workbook.Names.Where(n => string.Compare(n.Name, tableName, true) == 0).FirstOrDefault();
+                if (nmdRange != null)
+                {
+                    pkg.Workbook.Names.Remove(nmdRange.Name);
+                }
+                var worksheets = pkg.Workbook.Worksheets;
+                var wksheet = worksheets.Where(ws => string.Compare(ws.Name, worksheetName, true) == 0).FirstOrDefault();
+                if (wksheet != null)
+                {
+                    worksheets.Delete(wksheet);
+                }
+                WriteWorksheet(pkg.Workbook.Worksheets, worksheetName, _IsColumnNameSpecialAndToBeIgnored, dataReader, true, tableName);
+                pkg.Save();
+            }
         }
 
         public static IEnumerable<string> TableStyleNames()
@@ -219,7 +240,7 @@ namespace QueryXLerator
                 }
                 using (var rdr = cmd.ExecuteReader())
                 {
-                    WriteWorksheet(pkg.Workbook.Worksheets, worksheetName, _IsColumnNameSpecialAndToBeIgnored, rdr, skipEmptyResults, //token, 
+                    WriteWorksheet(pkg.Workbook.Worksheets, worksheetName, _IsColumnNameSpecialAndToBeIgnored, rdr, skipEmptyResults, //token,
                         tableName);
                 }
                 pkg.Save();
@@ -257,13 +278,32 @@ namespace QueryXLerator
         private static void WriteWorksheet(ExcelWorksheets worksheets,
             string proposedWorksheetName,
             Func<string, bool> IsColumnNameSpecialAndToBeIgnored,
-            SqlDataReader rdr, bool skipEmptyResults,
-            //CancellationToken token,
-            string tableName = null, string tableStyleName = null)
+            IDataReader rdr,
+            bool skipEmptyResults,
+            string tableName = null,
+            string tableStyleName = null)
         {
+            // If the reader is actually a sql data reader, we can enable some special functionality.
+            // But these two funcs will "opt out" of these features if it's some other reader type.
+            var sdr = rdr as SqlDataReader;
+            Func<IDataReader, bool> theReaderHasRows = (idr) =>
+            {
+                if (sdr == null)
+                {
+                    return true;
+                }
+                return sdr.HasRows;
+            };
+            Func<IDataReader, int, Type> providerSpecificDataType = (idr, columnIndex) =>
+            {
+                if (sdr == null)
+                    return idr.GetFieldType(columnIndex);
+                return sdr.GetProviderSpecificFieldType(columnIndex);
+            };
+
             if (skipEmptyResults)
             {
-                if (rdr.HasRows == false)
+                if (theReaderHasRows(rdr) == false)
                 {
                     return;
                 }
@@ -290,7 +330,7 @@ namespace QueryXLerator
                 {
                     ReaderIndex = cc,
                     ColumnMetaData = GetColumnMetadata(rdr.GetName(cc)),
-                    ProviderType = rdr.GetProviderSpecificFieldType(cc),
+                    ProviderType = providerSpecificDataType(rdr, cc),
                     Type = rdr.GetFieldType(cc)
                 }).ToArray();
 
@@ -396,7 +436,7 @@ namespace QueryXLerator
 
             //
             // Set up the functions in the Totals Row (if any were specified - if not, the totals row is not shown)
-            // Iterates through the columns in the 
+            // Iterates through the columns in the
             //
             foreach (var c in newExcelTable.Columns)
             {

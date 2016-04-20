@@ -1,241 +1,185 @@
-﻿<Window
+﻿<metro:MetroWindow
     x:Class="QueryXLerator.MainWindow"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:ae="http://icsharpcode.net/sharpdevelop/avalonedit"
+    xmlns:f="urn:fluent-ribbon"
+    xmlns:materialDesign="http://materialdesigninxaml.net/winfx/xaml/themes"
+    xmlns:metro="clr-namespace:MahApps.Metro.Controls;assembly=MahApps.Metro"
     Title="Query XLerator"
     Width="1000"
     Height="800"
+    BorderThickness="0"
+    GlowBrush="{DynamicResource AccentColorBrush}"
     Icon="dbquery-icon.jpg"
-    Loaded="MainWindow_Loaded">
-    <Window.Resources>
-        <Style TargetType="TextBlock">
-            <Setter Property="Margin" Value="5" />
-        </Style>
-        <Style x:Key="LinkButton" TargetType="Button">
-            <Setter Property="Template">
-                <Setter.Value>
-                    <ControlTemplate TargetType="Button">
-                        <TextBlock>
-                            <ContentPresenter />
-                        </TextBlock>
-                    </ControlTemplate>
-                </Setter.Value>
-            </Setter>
-            <Setter Property="Foreground" Value="Blue" />
-            <Style.Triggers>
-                <Trigger Property="IsMouseOver" Value="true">
-                    <Setter Property="Foreground" Value="Red" />
-                </Trigger>
-            </Style.Triggers>
-        </Style>
-        <Style TargetType="TextBox">
-            <Setter Property="MinHeight" Value="25" />
-            <Setter Property="Margin" Value="5" />
-        </Style>
-        <DataTemplate x:Key="TaskListItemTemplate">
-            <Border BorderBrush="{StaticResource {x:Static SystemColors.ControlDarkBrushKey}}" BorderThickness="2">
-                <Grid Margin="3">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                        <RowDefinition />
-                    </Grid.RowDefinitions>
+    Loaded="MainWindow_Loaded"
+    ResizeMode="CanResizeWithGrip">
+    <metro:MetroWindow.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Resources/Icons.xaml" />
 
-                    <TextBlock
-                        Grid.Row="1"
-                        MaxHeight="400"
-                        Text="{Binding Description}"
-                        TextWrapping="Wrap" />
-                    <TextBlock
-                        Grid.Row="2"
-                        MaxHeight="200"
-                        Text="{Binding Status}"
-                        TextWrapping="Wrap" />
-                    <CheckBox
-                        Grid.Row="3"
-                        Content="Error?"
-                        IsChecked="{Binding IsInErrorState}"
-                        IsEnabled="False" />
-                    <StackPanel Grid.Row="4" Orientation="Horizontal">
-                        <TextBlock>
-                            <Run Text="Started: " />
-                            <Run Text="{Binding Started, StringFormat=HH:mm:ss}" />
-                            <Run Text="    Elapsed: " />
-                            <Run Text="{Binding DurationString, Mode=OneWay}" />
-                        </TextBlock>
-                    </StackPanel>
-                    <StackPanel Grid.Row="5" Orientation="Horizontal">
-                        <Button
-                            Margin="3"
-                            Click="LoadQueryText"
-                            Content="Load Query"
-                            DataContext="{Binding}" />
-                        <Button
-                            Margin="3"
-                            Click="RemoveCompletedTask"
-                            Content="Remove"
-                            DataContext="{Binding}"
-                            IsEnabled="{Binding IsTaskComplete}" />
-                        <Button
-                            Margin="3"
-                            Click="CancelRunningTask"
-                            Content="Cancel"
-                            DataContext="{Binding}"
-                            IsEnabled="{Binding CanCancel}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </DataTemplate>
-    </Window.Resources>
-    <Grid>
-        <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="11*" />
-            <ColumnDefinition Width="8" />
-            <ColumnDefinition Width="5*" />
-        </Grid.ColumnDefinitions>
+            </ResourceDictionary.MergedDictionaries>
+            <Style TargetType="TextBlock">
+                <Setter Property="Margin" Value="5" />
+            </Style>
+            <Style x:Key="LinkButton" TargetType="Button">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="Button">
+                            <TextBlock>
+                                <ContentPresenter />
+                            </TextBlock>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+                <Setter Property="Foreground" Value="Blue" />
+                <Style.Triggers>
+                    <Trigger Property="IsMouseOver" Value="true">
+                        <Setter Property="Foreground" Value="Red" />
+                    </Trigger>
+                </Style.Triggers>
+            </Style>
+            <Style TargetType="TextBox">
+                <Setter Property="MinHeight" Value="25" />
+                <Setter Property="Margin" Value="5" />
+            </Style>
+            <DataTemplate x:Key="TaskListItemTemplate">
+                <Border
+                    Margin="0,3,0,3"
+                    BorderBrush="{StaticResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                    BorderThickness="2">
+                    <Grid Margin="3">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                            <RowDefinition />
+                        </Grid.RowDefinitions>
+
+                        <TextBlock
+                            Grid.Row="1"
+                            MaxHeight="200"
+                            ScrollViewer.VerticalScrollBarVisibility="Auto"
+                            Text="{Binding Description}"
+                            TextWrapping="Wrap" />
+                        <TextBox
+                            Grid.Row="2"
+                            MaxHeight="200"
+                            Text="{Binding Status}"
+                            TextWrapping="Wrap"
+                            VerticalScrollBarVisibility="Auto" />
+                        <CheckBox
+                            Grid.Row="3"
+                            Content="Error?"
+                            IsChecked="{Binding IsInErrorState}"
+                            IsEnabled="False" />
+                        <StackPanel Grid.Row="4" Orientation="Horizontal">
+                            <TextBlock>
+                                <Run Text="Started: " />
+                                <Run Text="{Binding Started, StringFormat=HH:mm:ss}" />
+                                <Run Text="    Elapsed: " />
+                                <Run Text="{Binding DurationString, Mode=OneWay}" />
+                            </TextBlock>
+                        </StackPanel>
+                        <StackPanel Grid.Row="5" Orientation="Horizontal">
+                            <Button
+                                Margin="3"
+                                Click="LoadQueryText"
+                                Content="Load Query"
+                                DataContext="{Binding}" />
+                            <Button
+                                Margin="3"
+                                Click="RemoveCompletedTask"
+                                Content="Remove"
+                                DataContext="{Binding}"
+                                IsEnabled="{Binding IsTaskComplete}" />
+                            <Button
+                                Margin="3"
+                                Click="CancelRunningTask"
+                                Content="Cancel"
+                                DataContext="{Binding}"
+                                IsEnabled="{Binding CanCancel}" />
+                        </StackPanel>
+                    </Grid>
+                </Border>
+
+            </DataTemplate>
+        </ResourceDictionary>
+    </metro:MetroWindow.Resources>
+
+    <Grid x:Name="OutermostLayoutGrid">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition />
-            <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
-        <GridSplitter
-            Grid.RowSpan="1000"
-            Grid.Column="1" />
 
-        <Grid Grid.RowSpan="1000" Grid.Column="2">
-            <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition Height="8" />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-            <Grid>
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <TextBlock
-                    Margin="0"
-                    Padding="5"
-                    Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                    Foreground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}">
-                    Running Tasks
-                </TextBlock>
-                <ListBox
-                    x:Name="RunningTasks"
-                    Grid.Row="1"
-                    ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
-            </Grid>
-            <GridSplitter
-                Grid.Row="1"
-                Height="8" />
-            <Grid Grid.Row="2">
-                <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition />
-                </Grid.RowDefinitions>
-                <TextBlock
-                    Margin="0"
-                    Padding="5"
-                    Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
-                    Foreground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}">
-                    Completed Tasks
-                </TextBlock>
-                <ListBox
-                    x:Name="CompletedTasks"
-                    Grid.Row="1"
-                    ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}" />
-            </Grid>
-
-        </Grid>
-
-        <Grid>
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition />
-            </Grid.ColumnDefinitions>
-            <Grid.RowDefinitions>
-                <RowDefinition />
-                <RowDefinition />
-                <RowDefinition />
-            </Grid.RowDefinitions>
-
-            <Label>Connection String:</Label>
-            <TextBox
-                Name="connectionStringTextBox"
-                Grid.Column="1"
-                Text="server=(localdb)\MSSqlLocalDB; integrated security=sspi;" />
-            <Label Grid.Row="1">Output File Name:</Label>
-            <TextBox
-                Name="outputFileNameTextBox"
-                Grid.Row="1"
-                Grid.Column="1"
-                Text="QueryOutput.xlsx"
-                ToolTip="Will be placed in your 'My Documents' folder" />
-            <TextBlock Grid.Row="2">Files will be saved to:</TextBlock>
-            <Button
-                Grid.Row="2"
-                Grid.Column="1"
-                Padding="3"
-                Style="{StaticResource LinkButton}"
-                VerticalContentAlignment="Center"
-                Click="OpenDocumentsFolder"
-                Content="{Binding OutputPath}" />
-
-        </Grid>
-        <Border
-            Grid.Row="1"
-            BorderBrush="Gray"
-            BorderThickness="2">
-            <ae:TextEditor
-                Name="queryText"
-                Margin="5"
-                FontFamily="PragmataPro"
-                FontSize="14"
-                HorizontalScrollBarVisibility="Auto"
-                KeyboardNavigation.AcceptsReturn="True"
-                VerticalScrollBarVisibility="Auto" />
-        </Border>
-
-        <Grid Grid.Row="3">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="Auto" />
-
-                <ColumnDefinition />
-                <ColumnDefinition Width="Auto" />
-            </Grid.ColumnDefinitions>
-            <GroupBox Grid.Column="1" Header="Empty resultsets in Excel output">
-                <StackPanel>
-                    <RadioButton
-                        x:Name="NoExcludeEmptyResultsFromExcelFile"
-                        Margin="5"
-                        Content="Ignore - do not include"
-                        GroupName="IBS"
-                        IsChecked="True" />
-                    <RadioButton
-                        x:Name="YesIncludeEmptyResultsInExcelFile"
-                        Margin="5"
-                        Content="Include blank tab in Excel file"
-                        GroupName="IBS" />
-                </StackPanel>
-            </GroupBox>
-            <GroupBox Grid.Column="2" Header="Table Style">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                    </Grid.RowDefinitions>
-                    <ComboBox
-                        Name="SelectedTableStyle"
-                        Width="200"
-                        HorizontalAlignment="Left"
+        <f:Ribbon
+            x:Name="ribbonMenu"
+            f:RibbonProperties.TitleBarHeight="0"
+            ShowQuickAccessToolBarAboveRibbon="False">
+            <!--  Backstage  -->
+            <!--<f:Ribbon.Menu>
+                <f:Backstage>
+                    <f:BackstageTabControl>
+                        <f:BackstageTabItem Header="New" />
+                        <f:BackstageTabItem Header="Print" />
+                        <f:Button Header="Blue"  />
+                    </f:BackstageTabControl>
+                </f:Backstage>
+            </f:Ribbon.Menu>-->
+            <!--<f:Ribbon.ContextualGroups>
+                <f:RibbonContextualTabGroup
+                    x:Name="toolsGroup"
+                    Background="Green"
+                    BorderBrush="Green"
+                    Header="Tools"
+                    Visibility="Collapsed" />
+            </f:Ribbon.ContextualGroups>-->
+            <!--  Tabs  -->
+            <f:RibbonTabItem Header="Home" KeyTip="H">
+                <f:RibbonGroupBox Header="Query">
+                    <f:Button
+                        Name="formatQueryButton"
+                        Height="24"
+                        Click="FormatQueryButton_Click"
+                        Header="Format Code"
+                        Icon="Media\sql.png"
+                        KeyTip="F"
+                        LargeIcon="Media\sql.png"
+                        Size="Middle" />
+                    <f:Button
+                        Name="executeQueryButton"
+                        Height="24"
+                        Click="RunQueryButton_Click"
+                        Header="Execute"
+                        Icon="Media\play.png"
+                        KeyTip="E"
+                        LargeIcon="Media\play.png"
+                        Size="Middle" />
+                </f:RibbonGroupBox>
+                <f:RibbonGroupBox Header="Empty Results">
+                    <f:CheckBox
+                        x:Name="includeEmptyResultsetsInExcelOutputFile"
+                        Header="Include in Output"
+                        IsChecked="True"
+                        KeyTip="I"
+                        ToolTip="When checked, empty results will be included in the Excel output. Otherwise, they are skipped." />
+                    </f:RibbonGroupBox>
+                <f:RibbonGroupBox Header="Table Style">
+                    <f:InRibbonGallery
+                        Name="SelectedTableStyleGallery"
+                        ItemHeight="29"
+                        ItemWidth="110"
                         ItemsSource="{Binding TableStyleNames}"
+                        MaxItemsInRow="3"
+                        MaxItemsInDropDownRow="6"
+                        ResizeMode="Both"
+                        Header="Excel Table Style"
                         SelectedIndex="0">
-                        <ComboBox.ItemTemplate>
+                        <f:InRibbonGallery.ItemTemplate>
                             <DataTemplate>
                                 <StackPanel Orientation="Horizontal">
                                     <!--
@@ -243,44 +187,136 @@
                                         a bit you can see many more at one time.
                                     -->
                                     <Image
-                                        Width="37"
-                                        Height="28"
-                                        Margin="3"
+                                        Height="24"
+                                        Width="34"
                                         Source="{Binding ImageSource}" />
                                     <TextBlock Margin="3" Text="{Binding Name}" />
                                 </StackPanel>
                             </DataTemplate>
-                        </ComboBox.ItemTemplate>
-                    </ComboBox>
-                </Grid>
-            </GroupBox>
-            <Grid Grid.Column="4">
+                        </f:InRibbonGallery.ItemTemplate>
+                    </f:InRibbonGallery>
+                </f:RibbonGroupBox>
+            </f:RibbonTabItem>
+
+        </f:Ribbon>
+
+        <Grid x:Name="EverythingButTheRibbon" Grid.Row="1">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="11*" />
+                <ColumnDefinition Width="8" />
+                <ColumnDefinition Width="5*" />
+            </Grid.ColumnDefinitions>
+
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition />
+            </Grid.RowDefinitions>
+
+            <GridSplitter
+                Grid.RowSpan="1000"
+                Grid.Column="1"
+                HorizontalAlignment="Stretch" />
+
+            <Grid
+                x:Name="FileGenerationTasks"
+                Grid.RowSpan="1000"
+                Grid.Column="2">
                 <Grid.RowDefinitions>
                     <RowDefinition />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="8" />
                     <RowDefinition />
                 </Grid.RowDefinitions>
-                <Button
-                    Name="RunQueryButton"
+                <Grid>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock
+                        Margin="0"
+                        Padding="5"
+                        Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                        Foreground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}">
+                        Running Tasks
+                    </TextBlock>
+                    <ListBox
+                        x:Name="RunningTasks"
+                        Grid.Row="1"
+                        ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}"
+                        ItemsSource="{Binding RunningTasksX}" />
+                </Grid>
+                <GridSplitter
                     Grid.Row="1"
-                    Margin="5"
-                    Click="RunQueryButton_Click"
-                    Content="Run Query" />
+                    Height="8"
+                    HorizontalAlignment="Stretch" />
+                <Grid Grid.Row="2">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition />
+                    </Grid.RowDefinitions>
+                    <TextBlock
+                        Margin="0"
+                        Padding="5"
+                        Background="{DynamicResource {x:Static SystemColors.ControlDarkBrushKey}}"
+                        Foreground="{DynamicResource {x:Static SystemColors.ControlLightLightBrushKey}}">
+                        Completed Tasks
+                    </TextBlock>
+                    <ListBox
+                        x:Name="CompletedTasks"
+                        Grid.Row="1"
+                        ItemTemplate="{StaticResource ResourceKey=TaskListItemTemplate}"
+                        ItemsSource="{Binding CompletedTasksX}" />
+                </Grid>
             </Grid>
-            <Grid Grid.Row="2">
+
+            <Grid x:Name="ConnectionParamsGrid">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition />
+                </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
                     <RowDefinition />
-                    <RowDefinition Height="Auto" />
+                    <RowDefinition />
                     <RowDefinition />
                 </Grid.RowDefinitions>
 
-                <Button
-                    Name="FormatQueryButton"
+                <Label>Connection String:</Label>
+                <TextBox
+                    Name="connectionStringTextBox"
+                    Grid.Column="1"
+                    Text="server=(localdb)\MSSqlLocalDB; integrated security=sspi;" />
+                <Label Grid.Row="1">Output File Name:</Label>
+                <TextBox
+                    Name="outputFileNameTextBox"
                     Grid.Row="1"
-                    Margin="5"
-                    Click="FormatQueryButton_Click"
-                    Content="Format Query" />
+                    Grid.Column="1"
+                    Text="QueryOutput.xlsx"
+                    ToolTip="Will be placed in your 'My Documents' folder" />
+                <TextBlock Grid.Row="2">Files will be saved to:</TextBlock>
+                <Button
+                    Grid.Row="2"
+                    Grid.Column="1"
+                    Padding="3"
+                    HorizontalContentAlignment="Left"
+                    VerticalContentAlignment="Center"
+                    Style="{StaticResource LinkButton}"
+                    Click="OpenDocumentsFolder"
+                    Content="{Binding OutputPath}" />
             </Grid>
+
+            <Border
+                Grid.Row="1"
+                BorderBrush="{StaticResource {x:Static SystemColors.ControlDarkDarkBrushKey}}"
+                BorderThickness="2">
+                <ae:TextEditor
+                    Name="queryText"
+                    Margin="5"
+                    FontFamily="PragmataPro"
+                    FontSize="14"
+                    HorizontalScrollBarVisibility="Auto"
+                    KeyboardNavigation.AcceptsReturn="True"
+                    VerticalScrollBarVisibility="Auto" />
+            </Border>
+
         </Grid>
     </Grid>
-</Window>
+</metro:MetroWindow>

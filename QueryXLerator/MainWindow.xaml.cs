@@ -1,20 +1,23 @@
-﻿using ICSharpCode.AvalonEdit.Highlighting;
+﻿using Fluent;
+using ICSharpCode.AvalonEdit.Highlighting;
 using ICSharpCode.AvalonEdit.Highlighting.Xshd;
+using MahApps.Metro.Controls;
+using MahApps.Metro.Controls.Dialogs;
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
-using System.Windows.Controls;
 using System.Windows.Media;
 using System.Xml;
+using cunt = System.Windows.Controls;
 
 namespace QueryXLerator
 {
     /// <summary>
     /// Interaction logic for MainWindow.xaml
     /// </summary>
-    public partial class MainWindow : Window
+    public partial class MainWindow : MetroWindow
     {
         public MainWindow()
         {
@@ -54,6 +57,13 @@ namespace QueryXLerator
             }
         }
 
+        private void CancelRunningTask(object sender, RoutedEventArgs e)
+        {
+            var tb = sender as cunt.Button;
+            var fgt = tb.DataContext as FileGenerationTaskViewModel;
+            fgt.Cancel();
+        }
+
         private void FormatQueryButton_Click(object sender, RoutedEventArgs e)
         {
             try
@@ -68,17 +78,19 @@ namespace QueryXLerator
 
         private void LoadQueryText(object sender, RoutedEventArgs e)
         {
-            var tb = sender as Button;
+            var tb = sender as cunt.Button;
             var fgt = tb.DataContext as FileGenerationTaskViewModel;
             this.queryText.Text = fgt.SqlQuery;
             this.outputFileNameTextBox.Text = fgt.FileName;
             if (fgt.IncludeBlankResults)
             {
-                NoExcludeEmptyResultsFromExcelFile.IsChecked = true;
+                includeEmptyResultsetsInExcelOutputFile.IsChecked = true;
+                //NoExcludeEmptyResultsFromExcelFile.IsChecked = true;
             }
             else
             {
-                YesIncludeEmptyResultsInExcelFile.IsChecked = true;
+                includeEmptyResultsetsInExcelOutputFile.IsChecked = false;
+                //YesIncludeEmptyResultsInExcelFile.IsChecked = true;
             }
         }
 
@@ -97,8 +109,8 @@ namespace QueryXLerator
                 }
             }
 
-            RunningTasks.ItemsSource = RunningTasksX;
-            CompletedTasks.ItemsSource = CompletedTasksX;
+            //RunningTasks.ItemsSource = RunningTasksX;
+            //CompletedTasks.ItemsSource = CompletedTasksX;
 
             this.queryText.SyntaxHighlighting = hl;
             queryText.Text = @"-- Just to demonstrate async exec of queries...
@@ -113,17 +125,17 @@ FROM master.sys.databases;
 ";
         }
 
+        private void OpenDocumentsFolder(object sender, RoutedEventArgs e)
+        {
+            var butt = sender as cunt.Button;
+            System.Diagnostics.Process.Start(butt.Content.ToString());
+        }
+
         private void RemoveCompletedTask(object sender, RoutedEventArgs e)
         {
-            var tb = sender as Button;
+            var tb = sender as cunt.Button;
             var fgt = tb.DataContext as FileGenerationTaskViewModel;
             CompletedTasksX.Remove(fgt);
-        }
-        private void CancelRunningTask(object sender, RoutedEventArgs e)
-        {
-            var tb = sender as Button;
-            var fgt = tb.DataContext as FileGenerationTaskViewModel;
-            fgt.Cancel();
         }
 
         private async void RunQueryButton_Click(object sender, RoutedEventArgs e)
@@ -147,8 +159,14 @@ FROM master.sys.databases;
 
             if (System.IO.File.Exists(finalOutputPath))
             {
-                var mbr = MessageBox.Show("Output file already exists - overwrite?", "Overwrite file?", MessageBoxButton.YesNo);
-                if (mbr == MessageBoxResult.No)
+                string messageText = $"The specified output file already exists:{Environment.NewLine}{finalOutputPath};";
+                var result = await this.ShowMessageAsync("Overwrite file?", messageText, MessageDialogStyle.AffirmativeAndNegative, new MetroDialogSettings
+                {
+                    AffirmativeButtonText = "Continue and Overwrite the file",
+                    NegativeButtonText = "Cancel entire operation"
+                });
+
+                if (result == MessageDialogResult.Negative)
                 {
                     return;
                 }
@@ -156,9 +174,11 @@ FROM master.sys.databases;
             var t = new FileGenerationTaskViewModel();
             t.Description = outputFileName;
             RunningTasksX.Insert(0, t);
-            var includeEmptyResults = NoExcludeEmptyResultsFromExcelFile.IsChecked;
+            var includeEmptyResults = includeEmptyResultsetsInExcelOutputFile.IsChecked;
+            //NoExcludeEmptyResultsFromExcelFile.IsChecked;
 
-            var selectedTableStyleSelectedValue = this.SelectedTableStyle.SelectedValue as ExcelTableStyle;
+            var selectedTableStyleSelectedValue = SelectedTableStyleGallery.SelectedValue as ExcelTableStyle;
+                //this.SelectedTableStyle.SelectedValue as ExcelTableStyle;
             var tableStyle = selectedTableStyleSelectedValue == null ? "" : selectedTableStyleSelectedValue.Name;
 
             await t.Run(finalOutputPath, queryText.Text, connectionStringTextBox.Text, outputFileNameTextBox.Text, includeEmptyResults.Value, tableStyle);
@@ -171,12 +191,6 @@ FROM master.sys.databases;
             public ImageSource ImageSource { get; set; }
 
             public string Name { get; set; }
-        }
-
-        private void OpenDocumentsFolder(object sender, RoutedEventArgs e)
-        {
-            var butt = sender as Button;
-            System.Diagnostics.Process.Start(butt.Content.ToString());
         }
     }
 }
